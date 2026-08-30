@@ -1,0 +1,74 @@
+# =====================================================================
+#  Backtest configuration. Everything tunable lives here.
+# =====================================================================
+
+data:
+  start: "2015-01-01"
+  end: "2026-08-14"
+  cache_dir: "data"
+
+# pip_size is what one pip is worth in price terms — needed to turn a
+# spread quoted in pips into a cost in returns.
+instruments:
+  EURUSD:
+    ticker: "EURUSD=X"
+    pip_size: 0.0001
+    typical_spread_pips: 1.0
+  GBPUSD:
+    ticker: "GBPUSD=X"
+    pip_size: 0.0001
+    typical_spread_pips: 1.3
+  USDJPY:
+    ticker: "JPY=X"
+    pip_size: 0.01
+    typical_spread_pips: 1.0
+  SP500:
+    ticker: "^GSPC"
+    pip_size: 0.01
+    typical_spread_pips: 40.0     # index CFD spread, far wider in price terms
+
+backtest:
+  # next_open  -> signal at close of day t, filled at open of day t+1 (realistic)
+  # next_close -> signal at close of day t, filled at close of day t+1 (optimistic)
+  execution: next_open
+  allow_short: true
+  initial_equity: 10000
+
+# Train/test split. Parameters are chosen on `train` only; `test` is
+# touched once, at the end. That is the whole point.
+split:
+  train_end: "2021-12-31"
+
+strategies:
+  ma_crossover:
+    fast: 20
+    slow: 100
+  rsi_reversion:
+    period: 14
+    oversold: 30
+    overbought: 70
+
+# Spread levels swept for the headline chart (in pips)
+spread_sweep: [0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0]
+
+# =====================================================================
+#  Validation. Parameter grids are declared here so the number of trials
+#  is auditable: the multiple-testing penalty is computed from the size of
+#  this search, and burying it in code would let it drift silently.
+# =====================================================================
+validation:
+  walk_forward:
+    # Counted in bars, not calendar days, so a fold always holds the same
+    # amount of information regardless of holidays.
+    train_days: 756          # about three years
+    test_days: 252           # about one year, traded forward
+    objective: sharpe
+
+  grids:
+    ma_crossover:
+      fast: [5, 10, 20, 30, 50]
+      slow: [50, 100, 150, 200]
+    rsi_reversion:
+      period: [7, 14, 21]
+      oversold: [20, 25, 30]
+      overbought: [70, 75, 80]
