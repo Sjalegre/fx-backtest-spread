@@ -1,0 +1,29 @@
+name: tests
+
+# Every test builds its own synthetic price series, so CI never calls Yahoo
+# Finance. A backtest whose test suite depends on a live data feed cannot
+# tell a broken engine from a bad download.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: pip install pyflakes
+      - name: Lint
+        run: python -m pyflakes src scripts tests
+      - name: Tests
+        run: python -m pytest tests/ -q
